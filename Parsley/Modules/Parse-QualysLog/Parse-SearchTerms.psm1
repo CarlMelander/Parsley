@@ -39,15 +39,19 @@ function Parse-SearchTerms {
         # Search log content for the search term
         $matches = $LogFileContent | Where-Object { $_ -match [regex]::Escape($searchText) }
 
-        # Remove duplicates and store results
-        if ($matches.Count -gt 0) {
+        # Ensure reliable deduplication
+        $uniqueMatches = @($matches | Select-Object -Unique)
+
+        # Store results if matches exist
+        if ($uniqueMatches.Count -gt 0) {
             $searchResults[$searchText] = [PSCustomObject]@{
                 Description = $description
                 Solution    = $solution
-                Matches     = $matches | Select-Object -Unique
+                Matches     = $uniqueMatches
             }
         }
     }
 
     return $searchResults
 }
+
