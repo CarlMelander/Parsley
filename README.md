@@ -4,8 +4,6 @@
 
 **Parsley** is a PowerShell-based tool designed for efficient analysis of Qualys Cloud Agent log files. Its primary functionality includes parsing logs using configurable search terms and providing a streamlined drag-and-drop interface for usability.
 
-There are no external libraries or dependencies required.
-
 ## Features
 
 1. **Configurable Search Terms**:
