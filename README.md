@@ -1,4 +1,4 @@
-# Parsley - Log File Analysis Tool
+# Parsley - Qualys Cloud Agent Log File Analysis Tool
 
 ## Overview
 
