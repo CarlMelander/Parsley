@@ -1,0 +1,12 @@
+Http Response 200:
+    Search: "Received HTTP response code: 200"
+    Description: "Code 200 indicates an OK status"
+    Solution: "All good"
+Missing Element:
+    Search: "Missing Element"
+    Description: "Mysterious Tour Bus"
+    Solution: "Dance in circles"
+Error: 
+    Search: "[Error]"
+    Description: "Errors are generally a bad thing"
+    Solution: "It's a trap"
