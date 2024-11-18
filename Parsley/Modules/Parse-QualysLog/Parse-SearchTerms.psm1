@@ -39,8 +39,22 @@ function Parse-SearchTerms {
         # Search log content for the search term
         $matches = $LogFileContent | Where-Object { $_ -match [regex]::Escape($searchText) }
 
-        # Ensure reliable deduplication
-        $uniqueMatches = @($matches | Select-Object -Unique)
+        # Deduplicate matches based on the suffix while keeping full lines
+        $processedMatches = @{}
+        foreach ($match in $matches) {
+            # Split the match line at the search term
+            $splitResult = $match -split [regex]::Escape($searchText)
+
+            if ($splitResult.Count -ge 2) {
+                $suffix = $splitResult[1].Trim() # Deduplicate using the suffix
+                if (-not $processedMatches.ContainsKey($suffix)) {
+                    $processedMatches[$suffix] = $match # Store the full line
+                }
+            }
+        }
+
+        # Convert the deduplicated full lines to an array
+        $uniqueMatches = $processedMatches.Values
 
         # Store results if matches exist
         if ($uniqueMatches.Count -gt 0) {
