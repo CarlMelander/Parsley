@@ -2,7 +2,11 @@
 
 ## Overview
 
-**Parsley** is a PowerShell-based tool designed for efficient analysis of Qualys Cloud Agent log files. Its primary functionality includes parsing logs using configurable search terms and providing a streamlined drag-and-drop interface for usability.
+**Parsley** is a PowerShell-based tool designed for efficient analysis of Qualys Cloud Agent log files. Its primary functionality includes parsing logs using configurable search terms and providing a streamlined drag-and-drop interface for usability. 
+
+## Considerations of Use
+
+- *NO* reliability of data should assumed from any of the outputs (I'm just a quasi-lazy nerd sharing a tool) - always use the raw data to troubleshoot. 
 
 ## Features
 
@@ -13,7 +17,7 @@
 2. **Ease of Use**:
    - Run the script by right-clicking it and selecting "Run with PowerShell."
    - Intuitive drag-and-drop interface: drop Qualys Cloud Agent log files into the window, and the analysis starts automatically.
-   - There are no external libraries or dependencies required.
+   - There are no external libraries or dependencies required, its designed to be transparent.
 
 3. **Customizable Environment**:
    - Reads configurations from `environment.yaml` for additional settings and customization.
@@ -21,8 +25,8 @@
 ## Installation and Setup
 
 1. **Prerequisites**:
-   - All Windows based machines should have Powershell by default. But, it must be said ensure PowerShell is installed and updated on your system.
-   - Do not change the file structure.
+   - All Windows based machines should have Powershell by default, but its good to make sure it is installed and updated anyways. 
+   - Do not change the file structure, some functionalities are dependant on the modules.
 
 2. **File Structure**:
    ```
@@ -50,7 +54,7 @@
    - Drag and drop Qualys Cloud Agent log files into the interface.
 
 2. **View Results**:
-   - The parsed log details, including timestamps and other key metrics, will be displayed dynamically.
+   - The parsed log details, including timestamps and other key metrics, these will be displayed dynamically on the left.
 
 3. **Modify Search Terms**:
    - Open `Search-Terms.yaml` in a text editor.
@@ -82,7 +86,7 @@
 
 ## Contributions
 
-Feel free reach out to me about **Parsley**. It is a work in progress :)
+Feel free reach out to me about **Parsley**. It is a work in progress after all :)
 
 ## License
 
