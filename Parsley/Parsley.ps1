@@ -1,13 +1,19 @@
-# Helper Variables
+# Helper Variable for the where the script is run from
 $scriptroot = [System.IO.Path]::GetDirectoryName($myInvocation.MyCommand.Definition)
+
+# Create hashtable for the list of files in the file list
 $filePaths = @{}
 
 # Modules
-Import-Module -Name "$($scriptroot)\Modules\Parse-QualysLog\Parse-QualysLog"
-Import-Module -Name "$($scriptroot)\Modules\Parse-QualysLog\Parse-SearchTerms"
-Import-Module -Name "$($scriptroot)\Modules\Get-YamlConfig\Get-YamlConfig"
+# Parse-Qualys Logs is a custom function built to parse mixed JSON and time stamped data from Qualys log files
+Import-Module -Name "$($scriptroot)\Modules\Parse-QualysLog\Parse-QualysLog" 
 
+# Parse-SearchTerms is a custom function built to parse the log file generally for search terms 
+# Takes in PSCustomObject containing search terms, outputs a hashtable of matches
+Import-Module -Name "$($scriptroot)\Modules\Parse-QualysLog\Parse-SearchTerms" 
 
+# Custom Lighweight YAML parser to handle the config files
+Import-Module -Name "$($scriptroot)\Modules\Get-YamlConfig\Get-YamlConfig" 
 
 # Load Configuration File
 $configFilePath = "$($scriptroot)\Modules\Add-Ons\environment.yaml"
@@ -16,28 +22,38 @@ $config = Get-YamlConfig -FilePath $configFilePath
 # Load Search File
 $searchTermFilePath = "$($scriptroot)\Search-Terms.yaml"
 $searchTerms = Get-YamlConfig -FilePath $searchTermFilePath
-#####DEBUGGING#####
-Write-Host "Search Terms: $($searchTerms)"
 
 # Main Form Name
 $mainFormName = $config.Values.name
 
-# Minimize the PowerShell console window
+# PowerShell console window ( Minimize )
 try{
 	Add-Type -TypeDefinition $config.command.MinimizeWindow
-	$consoleHandle = [WinAPI]::GetConsoleWindow()
-	[WinAPI]::ShowWindow($consoleHandle, [WinAPI]::SW_MINIMIZE)
+	$consoleHandle = [WinAPI_MinimizeWindow]::GetConsoleWindow()
+	[WinAPI_MinimizeWindow]::ShowWindow($consoleHandle, [WinAPI_MinimizeWindow]::SW_MINIMIZE)
 } catch {
 	Write-Host "Error: $_"
 }
 
-# Load Windows .Net Forms
+# PowerShell console window ( Bring to Front )
+try {
+    Add-Type -TypeDefinition $config.command.BringToFront
+    $consoleHandle = [WinAPI_BringToFront]::GetConsoleWindow()
+    [WinAPI_BringToFront]::ShowWindow($consoleHandle, [WinAPI_BringToFront]::SW_RESTORE)
+    [WinAPI_BringToFront]::SetForegroundWindow($consoleHandle)
+} catch {
+    Write-Host "Error: $_"
+}
+
+# Load Windows .Net Form assemblies
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
 # Calculate screen dimensions
 $screenWidth = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Width
 $screenHeight = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Height
+
+# TODO offload the scales into the config
 $formWidth = [int]($screenWidth * 0.75)
 $formHeight = [int]($screenHeight * 0.6)
 
@@ -114,7 +130,7 @@ $resultsBox.ForeColor = 'Lime'
 $resultsBox.BackColor = 'Black'
 $resultsBox.ReadOnly = $true
 $resultsBox.WordWrap = $true
-$resultsBox.ScrollBars = [System.Windows.Forms.RichTextBoxScrollBars]::Both  # Enable both scroll bars
+$resultsBox.ScrollBars = [System.Windows.Forms.RichTextBoxScrollBars]::Both  # both scroll bars
 $resultsBox.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor `
                       [System.Windows.Forms.AnchorStyles]::Bottom -bor `
                       [System.Windows.Forms.AnchorStyles]::Right
@@ -152,11 +168,12 @@ $listBox.Add_DragEnter({
 $listBox.Add_DragDrop({
     $files = $_.Data.GetData([Windows.Forms.DataFormats]::FileDrop)
     foreach ($file in $files) {
-        if ($file -match "\.log$") {
+        if ($file -match "\.(log|txt)$") {
             $fileName = [System.IO.Path]::GetFileName($file)
             if (-not $filePaths.ContainsKey($fileName)) {
-                $filePaths[$fileName] = $file  # Store full path
-                $listBox.Items.Add($fileName) # Add only the file name to the list box
+                $filePaths[$fileName] = $file  # Store full path for UID (list de-duplicated)
+											   # TODO consider trim "\.(log|txt)$" 
+                $listBox.Items.Add($fileName) # Add only the file name to the list box 
             }
         }
     }
@@ -171,24 +188,25 @@ function Add-ColoredText {
     )
 
 	# Dynamically build the color map from the configuration
+	# Store as hashtable for functions
 	$colorMap = @{}
 	foreach ($key in $config.Color.PSObject.Properties.Name) {
 		$colorName = $config.Color.$key.Trim('"')
 		$colorMap[$key.ToLower()] = [System.Drawing.Color]::FromName($colorName) 
 	}
 
-	# Retrieve the color
+	# Retrieve the color ( switch )
 	$color = switch ($type.ToLower()) {
 		{ $colorMap.ContainsKey($_) } { $colorMap[$_.ToLower()] } 
 		default    { [System.Drawing.Color]::FromName("White") }
 	}
 
-    $start = $richTextBox.TextLength
-    $richTextBox.AppendText($text)
-    $end = $richTextBox.TextLength
-    $richTextBox.Select($start, $end - $start)
+    $start = $richTextBox.TextLength # Current Length before +
+    $richTextBox.AppendText($text) # Append to existing
+    $end = $richTextBox.TextLength # updated length after +
+    $richTextBox.Select($start, $end - $start)  # append only modified text
     $richTextBox.SelectionColor = $color
-    $richTextBox.DeselectAll()
+    $richTextBox.DeselectAll() # Always good to clean up after yourself
 }
 
 # Event (Log Selected)
@@ -198,7 +216,7 @@ $listBox.Add_SelectedIndexChanged({
         $fullPath = $filePaths[$selectedFileName]  # Retrieve the full path
         $logContent = Get-Content $fullPath
 
-        # Clears the display for a new selection
+        # Clears the displays for a new selection
         $detailsBox.Clear()
 		$resultsBox.Clear()
 
@@ -218,12 +236,10 @@ $listBox.Add_SelectedIndexChanged({
 					[object]$Data,
 					[int]$IndentLevel = 0
 				)
-				$indent = ' ' * ($IndentLevel * 4)
-
+				$indent = ' ' * ($IndentLevel * 4) # Indent Char * indent level
 				if ($Data -is [PSCustomObject]) {
-					foreach ($property in $Data.PSObject.Properties) {
-						# Use "Parent" type for root level, "Key" for nested levels
-						$type = if ($IndentLevel -eq 0) { "Parent" } else { "Key" }
+					foreach ($property in $Data.PSObject.Properties) {			
+						$type = if ($IndentLevel -eq 0) { "Parent" } else { "Key" } # "Parent" type for root level, "Key" for nested levels
 						Add-ColoredText -richTextBox $detailsBox -text "$indent$($property.Name): " -type $type
 						if ($property.Value -is [PSCustomObject] -or $property.Value -is [System.Array]) {
 							Add-ColoredText -richTextBox $detailsBox -text "`n" -type $type
@@ -240,10 +256,7 @@ $listBox.Add_SelectedIndexChanged({
 					Add-ColoredText -richTextBox $detailsBox -text "$indent$Data`n" -type "Value"
 				}
 			}
-
-			# Call the Display-NestedData function
-			Display-NestedData -Data $parsedLog.JSONData
-			
+			Display-NestedData -Data $parsedLog.JSONData			
 		} catch {
 			Add-ColoredText -richTextBox $resultsBox -text "Error: $_`n" -type "Warning"
 			Write-Host "Error: $_"
@@ -277,7 +290,7 @@ $listBox.Add_SelectedIndexChanged({
 						Add-ColoredText -richTextBox $resultsBox -text "$key" -type "Warning"    # Matched search term
 						Add-ColoredText -richTextBox $resultsBox -text "$suffix`n" -type "Child"  # Remaining portion
 					} else {
-						# Fallback if no split occurs (should not happen with valid matches)
+						# Fallback if no split occurs for whatever reason I missed
 						Add-ColoredText -richTextBox $resultsBox -text "$match`n" -type "Info"
 					}
                 }
