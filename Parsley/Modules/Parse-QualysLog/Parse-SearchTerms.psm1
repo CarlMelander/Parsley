@@ -17,11 +17,11 @@ function Parse-SearchTerms {
     # Prepare output structure
     $searchResults = @{}
 
-    # Convert PSCustomObject to a hashtable-like structure
+    # Convert PSCustomObject to a hashtable 
     $searchTermsHashTable = $SearchTerms.PSObject.Properties | ForEach-Object {
         @(
             @{
-                Search      = $_.Value.Search.Trim('"') # Trim quotes from the Search term
+                Search      = $_.Value.Search.Trim('"') # Trim quotes from the Search term ( Test this more )
                 Description = $_.Value.Description
                 Solution    = $_.Value.Solution
             }
@@ -34,7 +34,7 @@ function Parse-SearchTerms {
         $description = $term.Description
         $solution = $term.Solution
 
-        Write-Host "Processing term: $searchText"
+       # Used for debugging Write-Host "Processing term: $searchText"
 
         # Search log content for the search term
         $matches = $LogFileContent | Where-Object { $_ -match [regex]::Escape($searchText) }
