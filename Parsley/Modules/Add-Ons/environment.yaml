@@ -14,6 +14,6 @@ Color:
 icon:
     Base64: iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAABmJLR0QA/wD/AP+gvaeTAAAArUlEQVRIie3VWwrCMBCF4a8iugIFt6K4PS9dnn1wBdZl1JcUSm01sRUpeCAkZJLzz2QeAkvkKFENHAXWWspHMH4JqTPftskJpoJp0QVpHhoCgBUuYe+KTSygT13xdiWjA2pIhSprHMh6DGLUe3cWafCx5m/iXZkl6esV/OyJYpvb1tOTTqbJvRVPv8l/QBTgHta7jnjqf1BrH+YSTglGqeMAC5xxG9H4hmPwnrgeD8uSTFsbKw0AAAAASUVORK5CYII=
 command:
-    MinimizeWindow: using System; using System.Runtime.InteropServices; public class WinAPI { [DllImport("kernel32.dll")] public static extern IntPtr GetConsoleWindow(); [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow); public const int SW_MINIMIZE = 6; }
-
+    MinimizeWindow: using System; using System.Runtime.InteropServices; public class WinAPI_MinimizeWindow { [DllImport("kernel32.dll")] public static extern IntPtr GetConsoleWindow(); [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow); public const int SW_MINIMIZE = 6; }
+    BringToFront: using System; using System.Runtime.InteropServices; public class WinAPI_BringToFront { [DllImport("kernel32.dll")] public static extern IntPtr GetConsoleWindow(); [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow); [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hWnd); public const int SW_RESTORE = 9;}
     
